@@ -58,12 +58,12 @@ static constexpr auto retryableErrors = {
     ENXIO,
 
     /*
-     * We can see this from some drivers when we try to do
-     * a read in the middle of them being unbound.  The
-     * unbinding should complete before the retries are up
-     * and kill this process.
+     * Some devices return this when they are busy doing
+     * something else.  Even if being busy isn't the cause,
+     * a retry still gives this app a shot at getting data
+     * as opposed to failing out on the first try.
      */
-    ENODEV,
+    ENODATA,
 };
 
 static const auto emptyString = ""s;
@@ -285,7 +285,7 @@ HwmonIO::HwmonIO(const std::string& path) : p(path)
 
 }
 
-uint32_t HwmonIO::read(
+int64_t HwmonIO::read(
         const std::string& type,
         const std::string& id,
         const std::string& sensor,
@@ -293,7 +293,7 @@ uint32_t HwmonIO::read(
         std::chrono::milliseconds delay,
         bool isOCC) const
 {
-    uint32_t val;
+    int64_t val;
     std::ifstream ifs;
     auto fullPath = sysfs::make_sysfs_path(
             p, type, id, sensor);
@@ -307,6 +307,7 @@ uint32_t HwmonIO::read(
     {
         try
         {
+            errno = 0;
             if (!ifs.is_open())
                 ifs.open(fullPath);
             ifs.clear();
@@ -322,10 +323,10 @@ uint32_t HwmonIO::read(
                 throw;
             }
 
-            if (rc == ENOENT)
+            if (rc == ENOENT || rc == ENODEV)
             {
-                // If the directory disappeared then this application should
-                // gracefully exit.  There are race conditions between the
+                // If the directory or device disappeared then this application
+                // should gracefully exit.  There are race conditions between the
                 // unloading of a hwmon driver and the stopping of this service
                 // by systemd.  To prevent this application from falsely failing
                 // in these scenarios, it will simply exit if the directory or
@@ -337,14 +338,7 @@ uint32_t HwmonIO::read(
 
             if (isOCC)
             {
-                if (rc == EAGAIN)
-                {
-                    // For the OCCs, when an EAGAIN is return, just set the
-                    // value to 0 (0x00 = sensor is unavailable)
-                    val = 0;
-                    break;
-                }
-                else if (rc == EREMOTEIO)
+                if (rc == EREMOTEIO)
                 {
                     // For the OCCs, when an EREMOTEIO is return, set the
                     // value to 255*1000
@@ -405,6 +399,7 @@ void HwmonIO::write(
     {
         try
         {
+            errno = 0;
             if (!ofs.is_open())
                 ofs.open(fullPath);
             ofs.clear();

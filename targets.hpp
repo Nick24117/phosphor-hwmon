@@ -5,6 +5,17 @@
 #include <phosphor-logging/log.hpp>
 #include <xyz/openbmc_project/Sensor/Device/error.hpp>
 #include "fan_speed.hpp"
+#include "fan_pwm.hpp"
+
+enum class targetType
+{
+    DEFAULT,
+    RPM,
+    PWM
+};
+
+static constexpr auto RPM_TARGET = "RPM";
+static constexpr auto PWM_TARGET = "PWM";
 
 /** @class Targets
  *  @brief Target type traits.
@@ -25,6 +36,12 @@ template <>
 struct Targets<hwmon::FanSpeed>
 {
     static constexpr InterfaceType type = InterfaceType::FAN_SPEED;
+};
+
+template <>
+struct Targets<hwmon::FanPwm>
+{
+    static constexpr InterfaceType type = InterfaceType::FAN_PWM;
 };
 
 /** @brief addTarget
@@ -54,52 +71,107 @@ std::shared_ptr<T> addTarget(const SensorSet::key_type& sensor,
     auto& bus = *std::get<sdbusplus::bus::bus*>(info);
     auto& obj = std::get<Object>(info);
     auto& objPath = std::get<std::string>(info);
+    auto type = Targets<T>::type;
 
     // Check if target sysfs file exists
-    auto sysfsFullPath = sysfs::make_sysfs_path(ioAccess.path(),
-                                                sensor.first,
-                                                sensor.second,
-                                                hwmon::entry::target);
+    std::string sysfsFullPath;
+    std::string targetName = sensor.first;
+    std::string targetId = sensor.second;
+    std::string entry = hwmon::entry::target;
+
+    using namespace std::literals;
+    const std::string pwm = "pwm"s;
+    const std::string empty = ""s;
+
+    if (InterfaceType::FAN_PWM == type)
+    {
+        targetName = pwm;
+        // If PWM_TARGET is set, use the specified pwm id
+        auto id = getEnv("PWM_TARGET", sensor);
+        if (!id.empty())
+        {
+            targetId = id;
+        }
+        entry = empty;
+    }
+
+    sysfsFullPath = sysfs::make_sysfs_path(ioAccess.path(),
+                                           targetName,
+                                           targetId,
+                                           entry);
     if (fs::exists(sysfsFullPath))
     {
-        uint32_t targetSpeed = 0;
-
-        try
+        auto useTarget = true;
+        auto tmEnv = getenv("TARGET_MODE");
+        if (tmEnv)
         {
-            targetSpeed = ioAccess.read(
-                    sensor.first,
-                    sensor.second,
-                    hwmon::entry::target,
+            std::string mode{tmEnv};
+            std::transform(mode.begin(), mode.end(), mode.begin(), toupper);
+
+            if (mode == RPM_TARGET)
+            {
+                if (type != InterfaceType::FAN_SPEED)
+                {
+                    useTarget = false;
+                }
+            }
+            else if (mode == PWM_TARGET)
+            {
+                if (type != InterfaceType::FAN_PWM)
+                {
+                    useTarget = false;
+                }
+            }
+            else
+            {
+                using namespace phosphor::logging;
+                log<level::ERR>("Invalid TARGET_MODE env var found",
+                        phosphor::logging::entry(
+                                "TARGET_MODE=%s", tmEnv),
+                        phosphor::logging::entry(
+                                "DEVPATH=%s", devPath.c_str()));
+            }
+        }
+
+        if (useTarget)
+        {
+            uint32_t targetSpeed = 0;
+
+            try
+            {
+                targetSpeed = ioAccess.read(
+                    targetName,
+                    targetId,
+                    entry,
                     sysfs::hwmonio::retries,
                     sysfs::hwmonio::delay);
+            }
+            catch (const std::system_error& e)
+            {
+                using namespace phosphor::logging;
+                using namespace sdbusplus::xyz::openbmc_project::
+                    Sensor::Device::Error;
+                using metadata = xyz::openbmc_project::Sensor::
+                    Device::ReadFailure;
 
+                report<ReadFailure>(
+                        metadata::CALLOUT_ERRNO(e.code().value()),
+                        metadata::CALLOUT_DEVICE_PATH(devPath.c_str()));
+
+                log<level::INFO>("Logging failing sysfs file",
+                        phosphor::logging::entry(
+                                "FILE=%s", sysfsFullPath.c_str()));
+            }
+
+            target = std::make_shared<T>(ioAccess.path(),
+                                         devPath,
+                                         targetId,
+                                         bus,
+                                         objPath.c_str(),
+                                         deferSignals,
+                                         targetSpeed);
+            obj[type] = target;
         }
-        catch (const std::system_error& e)
-        {
-            using namespace phosphor::logging;
-            using namespace sdbusplus::xyz::openbmc_project::
-                Sensor::Device::Error;
-            using metadata = xyz::openbmc_project::Sensor::
-                Device::ReadFailure;
-
-            report<ReadFailure>(
-                    metadata::CALLOUT_ERRNO(e.code().value()),
-                    metadata::CALLOUT_DEVICE_PATH(devPath.c_str()));
-
-            log<level::INFO>("Logging failing sysfs file",
-                    phosphor::logging::entry(
-                            "FILE=%s", sysfsFullPath.c_str()));
-        }
-
-        target = std::make_shared<T>(ioAccess.path(),
-                                     devPath,
-                                     sensor.second,
-                                     bus,
-                                     objPath.c_str(),
-                                     deferSignals,
-                                     targetSpeed);
-        auto type = Targets<T>::type;
-        obj[type] = target;
     }
 
     return target;

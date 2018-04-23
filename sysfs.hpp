@@ -15,6 +15,11 @@ inline std::string make_sysfs_path(const std::string& path,
     using namespace std::literals;
 
     std::string st;
+
+    if (entry.empty()) {
+        return path + "/"s + type + id;
+    }
+
     if (type.compare("pwm") == 0 && entry.compare("input") == 0)
         st = path + "/"s + type + id;
     else
@@ -125,7 +130,7 @@ class HwmonIO
          *
          *  @return val - The read value.
          */
-        uint32_t read(
+        int64_t read(
                 const std::string& type,
                 const std::string& id,
                 const std::string& sensor,
