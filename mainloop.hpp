@@ -10,7 +10,7 @@
 #include "interface.hpp"
 #include "timer.hpp"
 
-static constexpr auto default_interval = 1000000;
+static constexpr auto default_interval = 1000;
 
 using Object = std::map<InterfaceType, std::experimental::any>;
 using ObjectInfo = std::tuple<sdbusplus::bus::bus*, std::string, Object>;
