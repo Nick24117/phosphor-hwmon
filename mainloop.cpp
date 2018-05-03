@@ -575,8 +575,8 @@ void MainLoop::read()
     // Iterate through all the sensors.
     for (auto& i : state)
     {
-        auto& attrs = std::get<0>(i.second);
-        if (attrs.find(hwmon::entry::input) != attrs.end())
+        //auto& attrs = std::get<0>(i.second);
+        //if (attrs.find(hwmon::entry::input) != attrs.end())
         {
             // Read value from sensor.
             int64_t value;
