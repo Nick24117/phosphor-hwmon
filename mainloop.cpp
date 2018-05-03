@@ -437,6 +437,7 @@ void MainLoop::getObject(SensorSet::container_t::const_reference sensor)
     addThreshold<WarningObject>(sensor.first.first, id, sensorValue, info);
     addThreshold<CriticalObject>(sensor.first.first, id, sensorValue, info);
 
+#if defined(PWM_TARGET_ENABLE) && PWM_TARGET_ENABLE
     auto target = addTarget<hwmon::FanSpeed>(
             sensor.first, ioAccess, _devPath, info);
     if (target)
@@ -444,7 +445,7 @@ void MainLoop::getObject(SensorSet::container_t::const_reference sensor)
         target->enable();
     }
     addTarget<hwmon::FanPwm>(sensor.first, ioAccess, _devPath, info);
-
+#endif
     // All the interfaces have been created.  Go ahead
     // and emit InterfacesAdded.
     valueInterface->emit_object_added();
