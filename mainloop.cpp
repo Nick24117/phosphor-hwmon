@@ -18,6 +18,8 @@
 #include <cstdlib>
 #include <string>
 #include <set>
+#include <fstream>
+#include <stdio.h>
 
 #include <phosphor-logging/elog-errors.hpp>
 #include "config.h"
@@ -329,6 +331,11 @@ void add_event_log(sdbusplus::bus::bus& bus,
     return;
 }
 
+static bool fexists(const std::string& filename) {
+    std::ifstream ifile(filename.c_str());
+    return (bool)ifile;
+}
+
 MainLoop::MainLoop(
     sdbusplus::bus::bus&& bus,
     const std::string& path,
@@ -349,6 +356,25 @@ MainLoop::MainLoop(
     if (path.find("occ") != std::string::npos)
     {
         _isOCC = true;
+    }
+
+    if (path.find("occ-hwmon.1") != std::string::npos) {
+        _occ_max_core_path.assign(OCC_P0_MAX_CORE_TEMP_PATH);
+        _occ_max_dimm_path.assign(OCC_P0_MAX_DIMM_TEMP_PATH);
+    } else if (path.find("occ-hwmon.2") != std::string::npos) {
+        _occ_max_core_path.assign(OCC_P1_MAX_CORE_TEMP_PATH);
+        _occ_max_dimm_path.assign(OCC_P1_MAX_DIMM_TEMP_PATH);
+    }
+    std::ofstream file_max_occ;
+    if (_occ_max_dimm_path.length() > 0) {
+        file_max_occ.open(_occ_max_dimm_path.c_str());
+        file_max_occ << 0;
+        file_max_occ.close();
+    }
+    if (_occ_max_core_path.length() > 0) {
+        file_max_occ.open(_occ_max_core_path.c_str());
+        file_max_occ << 0;
+        file_max_occ.close();
     }
 
     std::string p = path;
@@ -484,13 +510,14 @@ void MainLoop::run()
 
     // TODO: Issue#3 - Need to make calls to the dbus sensor cache here to
     //       ensure the objects all exist?
-
     // Polling loop.
     while (!_shutdown)
     {
 #ifdef REMOVE_ON_FAIL
         std::vector<SensorSet::key_type> destroy;
 #endif
+        int occ_max_core_temp = 0;
+        int occ_max_dimm_temp = 0;
         // Iterate through all the sensors.
         for (auto& i : state)
         {
@@ -518,6 +545,16 @@ void MainLoop::run()
 					std::string sensor_name = std::get<std::string>(i.second);
                     auto& obj = std::get<Object>(objInfo);
                     auto result_check_threshold = 0;
+
+                    if (_isOCC == true) {
+                        if (sensor_name.compare(0, 4, "dimm") == 0) { //dimm temp
+                            if (occ_max_dimm_temp < value)
+                                occ_max_dimm_temp = value;
+                        } else if (sensor_name.compare(3, 4, "core") == 0) { //core temp
+                            if (occ_max_core_temp < value)
+                                occ_max_core_temp = value;
+                        }
+                    }
                     for (auto& iface : obj)
                     {
                         auto valueIface = std::shared_ptr<ValueObject>();
@@ -611,6 +648,20 @@ void MainLoop::run()
                     exit(EXIT_FAILURE);
 #endif
                 }
+            }
+        }
+
+        if (_isOCC == true) {
+            std::ofstream file_max_occ;
+            if (fexists(_occ_max_dimm_path)) {
+                file_max_occ.open(_occ_max_dimm_path.c_str());
+                file_max_occ << occ_max_dimm_temp;
+                file_max_occ.close();
+            }
+            if (fexists(_occ_max_core_path)) {
+                file_max_occ.open(_occ_max_core_path.c_str());
+                file_max_occ << occ_max_core_temp;
+                file_max_occ.close();
             }
         }
 

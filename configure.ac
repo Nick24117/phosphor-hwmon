@@ -83,6 +83,10 @@ AC_DEFINE_UNQUOTED([BUSNAME_PREFIX], ["$BUSNAME_PREFIX"], [The DBus busname pref
 AC_DEFINE_UNQUOTED([SENSOR_ROOT], ["$SENSOR_ROOT"], [The DBus sensors namespace root.])
 AC_DEFINE(LOG_LEVEL_WARNING, 4, [The log manager DBus busname to own.])
 AC_DEFINE(LOG_LEVEL_CRITICAL, 2, [The log manager DBus busname to own.])
+AC_DEFINE(OCC_P0_MAX_CORE_TEMP_PATH, "/run/initramfs/max_occ_p0_core_temp", [Store OCC-HWMON0 Core max temp file path])
+AC_DEFINE(OCC_P0_MAX_DIMM_TEMP_PATH, "/run/initramfs/max_occ_p0_dimm_temp", [Store OCC-HWMON0 Dimm max temp file path])
+AC_DEFINE(OCC_P1_MAX_CORE_TEMP_PATH, "/run/initramfs/max_occ_p1_core_temp", [Store OCC-HWMON1 Core max temp file path])
+AC_DEFINE(OCC_P1_MAX_DIMM_TEMP_PATH, "/run/initramfs/max_occ_p1_dimm_temp", [Store OCC-HWMON1 Dimm max temp file path])
 
 # Create configured output
 AC_CONFIG_FILES([Makefile test/Makefile msl/Makefile])

@@ -78,6 +78,10 @@ class MainLoop
         const char* _root;
         /** @brief hwmon instance is for an OCC. */
         bool _isOCC = false;
+        /** @brief store occ core max temp file path. */
+        std::string _occ_max_core_path;
+        /** @brief store occ dimm max temp file path. */
+        std::string _occ_max_dimm_path;
         /** @brief DBus object state. */
         SensorState state;
         /** @brief Sleep interval in microseconds. */
