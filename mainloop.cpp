@@ -589,6 +589,10 @@ void MainLoop::run()
                                         add_event_log(_bus, error_log, "ThresholdWarning", (i.first.first+i.first.second), "Assert", LOG_LEVEL_WARNING);
                                         break;
                                     default:
+                                        error_log.assign("Sensor Warning Recover:");
+                                        error_log.append(sensor_name);
+                                        error_log.append(", value:");
+                                        error_log.append(std::to_string(value));
                                         add_event_log(_bus, "", "ThresholdWarning", (i.first.first+i.first.second), "Deassert", LOG_LEVEL_WARNING);
                                         break;
                                 }
@@ -613,6 +617,10 @@ void MainLoop::run()
                                         add_event_log(_bus, error_log, "ThresholdCritical", (i.first.first+i.first.second), "Assert", LOG_LEVEL_CRITICAL);
                                         break;
                                     default:
+                                        error_log.assign("Sensor Critical Recover:");
+                                        error_log.append(sensor_name);
+                                        error_log.append(", value:");
+                                        error_log.append(std::to_string(value));
                                         add_event_log(_bus, "", "ThresholdCritical", (i.first.first+i.first.second), "Deassert", LOG_LEVEL_CRITICAL);
                                         break;
                                 }
