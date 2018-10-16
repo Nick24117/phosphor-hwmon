@@ -575,7 +575,7 @@ void MainLoop::run()
                             case InterfaceType::WARN:
                                 result_check_threshold = checkThresholds<WarningObject>(iface.second, value);
                                 //(i.first.first+i.first.second) -> sensor type+id, ex:type-pwm , id-1
-								printf ("[DEBUGMSG] Warning result_check_threshold : %d , value : %d \n", result_check_threshold, value);
+								printf ("[DEBUGMSG] Warning result_check_threshold : %d \n, sensor name : %s value : %d \n", result_check_threshold, sensor_name.c_str(), value);
                                 switch (result_check_threshold)
                                 {
                                     case 2: // (value>WarningHigh)
@@ -604,7 +604,7 @@ void MainLoop::run()
                             case InterfaceType::CRIT:
                                 result_check_threshold = checkThresholds<CriticalObject>(iface.second, value);
                                 //(i.first.first+i.first.second) -> sensor type+id, ex:type-pwm , id-1
-								printf ("[DEBUGMSG] Critical result_check_threshold : %d , value : %d \n", result_check_threshold, value);
+								printf ("[DEBUGMSG] Critical result_check_threshold : %d \n, sensor name : %s value : %d \n", result_check_threshold, sensor_name.c_str(), value);
                                 switch (result_check_threshold)
                                 {
                                     case 2: // (value>CRITHigh)
