@@ -310,6 +310,7 @@ void add_event_log(sdbusplus::bus::bus& bus,
     //check if even trigger assert or deassert event
     std::string record_item_key = event_key + sensor;
     auto record_item = g_record_event_list.find(record_item_key);
+	cout << "[DEBUGMSG]assert_msg : " << assert_msg << endl;
     if (assert_msg == "Assert") {
         if (record_item != g_record_event_list.end())
             return;
@@ -572,6 +573,7 @@ void MainLoop::run()
                             case InterfaceType::WARN:
                                 result_check_threshold = checkThresholds<WarningObject>(iface.second, value);
                                 //(i.first.first+i.first.second) -> sensor type+id, ex:type-pwm , id-1
+								cout << "[DEBUGMSG]result_check_threshold : "<< result_check_threshold << endl;
                                 switch (result_check_threshold)
                                 {
                                     case 2: // (value>WarningHigh)
@@ -600,6 +602,7 @@ void MainLoop::run()
                             case InterfaceType::CRIT:
                                 result_check_threshold = checkThresholds<CriticalObject>(iface.second, value);
                                 //(i.first.first+i.first.second) -> sensor type+id, ex:type-pwm , id-1
+								cout << "[DEBUGMSG]result_check_threshold : "<< result_check_threshold << endl;
                                 switch (result_check_threshold)
                                 {
                                     case 2: // (value>CRITHigh)
