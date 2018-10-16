@@ -313,14 +313,21 @@ void add_event_log(sdbusplus::bus::bus& bus,
 	
     if (assert_msg == "Assert") {
         if (record_item != g_record_event_list.end())
+		{
+			printf ("[DEBUGMSG] Assert return sensor : %s \n", sensor.c_str());
             return;
+		}
         g_record_event_list.insert(record_item_key);
-		printf ("[DEBUGMSG] Assert loop \n");
+		printf ("[DEBUGMSG] Assert loop sensor : %s \n", sensor.c_str());
     } 
 	else if (assert_msg == "Deassert") {
 		if (record_item != g_record_event_list.end())
-            g_record_event_list.erase(record_item);
-        return;
+		{
+			printf ("[DEBUGMSG] Deassert return sensor : %s \n", sensor.c_str());
+			return;
+		}
+        g_record_event_list.erase(record_item);
+        printf ("[DEBUGMSG] Deassert loop sensor : %s \n", sensor.c_str());
     }
 	printf ("[DEBUGMSG] creat log sensor : %s ; assert_msg : %s \n", sensor.c_str(), assert_msg.c_str());
     auto method =  bus.new_method_call("xyz.openbmc_project.Logging",
@@ -575,7 +582,7 @@ void MainLoop::run()
                             case InterfaceType::WARN:
                                 result_check_threshold = checkThresholds<WarningObject>(iface.second, value);
                                 //(i.first.first+i.first.second) -> sensor type+id, ex:type-pwm , id-1
-								printf ("[DEBUGMSG] Warning result_check_threshold : %d \n, sensor name : %s value : %d \n", result_check_threshold, sensor_name.c_str(), value);
+								printf ("[DEBUGMSG] Warning result_check_threshold : %d , sensor name : %s value : %d \n", result_check_threshold, sensor_name.c_str(), value);
                                 switch (result_check_threshold)
                                 {
                                     case 2: // (value>WarningHigh)
@@ -604,7 +611,7 @@ void MainLoop::run()
                             case InterfaceType::CRIT:
                                 result_check_threshold = checkThresholds<CriticalObject>(iface.second, value);
                                 //(i.first.first+i.first.second) -> sensor type+id, ex:type-pwm , id-1
-								printf ("[DEBUGMSG] Critical result_check_threshold : %d \n, sensor name : %s value : %d \n", result_check_threshold, sensor_name.c_str(), value);
+								printf ("[DEBUGMSG] Critical result_check_threshold : %d , sensor name : %s value : %d \n", result_check_threshold, sensor_name.c_str(), value);
                                 switch (result_check_threshold)
                                 {
                                     case 2: // (value>CRITHigh)
