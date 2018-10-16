@@ -322,8 +322,7 @@ void add_event_log(sdbusplus::bus::bus& bus,
             g_record_event_list.erase(record_item);
         return;
     }
-	cout << "DEBUGMSG] creat log sensor : " << sensor << "; assert_msg : " << assert_msg << endl;
-	printf ("[DEBUGMSG] creat log sensor : %s ; assert_msg : %s \n", sensor, assert_msg);
+	printf ("[DEBUGMSG] creat log sensor : %s ; assert_msg : %s \n", sensor.c_str(), assert_msg.c_str());
     auto method =  bus.new_method_call("xyz.openbmc_project.Logging",
                                        "/xyz/openbmc_project/logging/internal/manager",
                                        "xyz.openbmc_project.Logging.Internal.Manager",
