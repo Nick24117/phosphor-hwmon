@@ -312,13 +312,13 @@ void add_event_log(sdbusplus::bus::bus& bus,
     auto record_item = g_record_event_list.find(record_item_key);
 	
     if (assert_msg == "Assert") {
-		printf ("[DEBUGMSG] Assert loop /n");
+		printf ("[DEBUGMSG] Assert loop \n");
         if (record_item != g_record_event_list.end())
             return;
         g_record_event_list.insert(record_item_key);
     } 
 	else if (assert_msg == "Deassert") {
-		printf ("[DEBUGMSG] Deassert loop /n");
+		printf ("[DEBUGMSG] Deassert loop \n");
         if (record_item != g_record_event_list.end())
             g_record_event_list.erase(record_item);
         return;
@@ -576,7 +576,7 @@ void MainLoop::run()
                             case InterfaceType::WARN:
                                 result_check_threshold = checkThresholds<WarningObject>(iface.second, value);
                                 //(i.first.first+i.first.second) -> sensor type+id, ex:type-pwm , id-1
-								printf ("[DEBUGMSG] result_check_threshold : %d/n", result_check_threshold);
+								printf ("[DEBUGMSG] Warning result_check_threshold : %d\n", result_check_threshold);
                                 switch (result_check_threshold)
                                 {
                                     case 2: // (value>WarningHigh)
@@ -605,7 +605,7 @@ void MainLoop::run()
                             case InterfaceType::CRIT:
                                 result_check_threshold = checkThresholds<CriticalObject>(iface.second, value);
                                 //(i.first.first+i.first.second) -> sensor type+id, ex:type-pwm , id-1
-								printf ("[DEBUGMSG] result_check_threshold : %d/n", result_check_threshold);
+								printf ("[DEBUGMSG] Critical result_check_threshold : %d\n", result_check_threshold);
                                 switch (result_check_threshold)
                                 {
                                     case 2: // (value>CRITHigh)
